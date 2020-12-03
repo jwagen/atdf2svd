@@ -17,9 +17,14 @@ pub fn parse(
         .and_then(|d| if !d.is_empty() { Some(d) } else { None })
         .cloned();
 
-    let access = if let Some(access) = el.attributes.get("ocd-rw") {
+    // XMEGA chips and onwards use "rw" as access arrtibute
+    let access = el.attributes.get("ocd-rw").or(el.attributes.get("rw"));
+
+    let access = if let Some(access) = access {
         match access.as_ref() {
             "R" => chip::AccessMode::ReadOnly,
+            "W" => chip::AccessMode::WriteOnly,
+            "RW" => chip::AccessMode::ReadWrite,
             "" => {
                 log::warn!("empty access-mode on {}", el.debug());
                 chip::AccessMode::ReadWrite
